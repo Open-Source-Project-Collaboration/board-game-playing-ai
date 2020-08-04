@@ -1,6 +1,6 @@
 # Board-Game-Playing-AI
 
-Prerequisities:
+Prerequisites:
 1. Pygame library
 (more will be added later)
 
