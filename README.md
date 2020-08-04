@@ -2,7 +2,7 @@
 
 Prerequisities:
 1. Pygame library
-(More will be added later)
+(more will be added later)
 
 Objectives:
 1. Creating a chess game in which the player can play against AI
