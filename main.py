@@ -35,8 +35,10 @@ def draw_board():
     for r in range(squares):
         for c in range(squares):
             color = colors[(r + c) % 2]  # Picks either the white square or the black one
-            screen.blit(color, pygame.Rect(r * square_size, c * square_size, square_size, square_size))  # Adds the
+            screen.blit(color, pygame.Rect(c * square_size, r * square_size, square_size, square_size))  # Adds the
             # picked square
+            if (r, c) in highlighted_squares:
+                screen.blit(colors[2], pygame.Rect(c * square_size, r * square_size, square_size, square_size))
 
 
 def draw_pieces(gs):
@@ -53,19 +55,19 @@ if __name__ == "__main__":
     width = height = 512  # Game will run at 512 x 512
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Chess")
-    colors = [pygame.image.load("Images/White.png"), pygame.image.load("Images/Black.png")]  # The black square and the
-    # white square images
+    colors = [pygame.image.load("Images/White.png"), pygame.image.load("Images/Black.png"),
+              pygame.image.load("Images/Highlight.png")]
+    # The black square, white square images and highlight square images
     squares = 8
     square_size = height // squares
     game_state = GameState()
     pieces_images = {}  # A dictionary with the chess piece notations as keys and the images as values
     load_images()
-    draw_board()
-    draw_pieces(game_state)
     moves = []  # Moves list will have a maximum length of two values as tuples containing the start square and the end
     # square
     valid_moves = []  # A list of lists containing
     # valid moves in the form [[(start_row, start_col), (end_row, end_col)], [...], [...]]
+    highlighted_squares = []
     while True:
         move_made = False
         for event in pygame.event.get():  # Checks if the game is still running
@@ -74,17 +76,22 @@ if __name__ == "__main__":
             if event.type == pygame.MOUSEBUTTONDOWN:
                 column = pygame.mouse.get_pos()[0] // square_size
                 row = pygame.mouse.get_pos()[1] // square_size
-                moves.append((row, column))
-                if ((row, column) == moves[0] and len(moves) == 2) \
+                selected_square = (row, column)
+                moves.append(selected_square)
+                highlighted_squares.append(selected_square)
+                if (selected_square == moves[0] and len(moves) == 2) \
                         or (game_state.board[row][column] == "--" and len(moves) == 1):  # If the user selected the same
                     # piece in the second move or selected an empty square in the first move
                     moves = []  # Reset the moves list
+                    highlighted_squares = []
                 elif len(moves) == 2 and [moves[0], moves[1]] in valid_moves:
                     game_state.make_move(moves[0][0], moves[0][1], moves[1][0], moves[1][1])
                     moves = []
+                    highlighted_squares = []
                     move_made = True
                 elif len(moves) == 2 and [moves[0], moves[1]] not in valid_moves:
                     moves = []
+                    highlighted_squares = []
 
         pygame.display.flip()  # updates the screen
         draw_board()
