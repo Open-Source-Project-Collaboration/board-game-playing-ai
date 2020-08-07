@@ -19,7 +19,7 @@ class GameState:
             self.board[end_row][end_column] = piece
 
 
-def load_images():
+def load_images():  # Loads the images of the pieces
     for item in game_state.board:
         for piece in item:
             if piece != "--":
@@ -58,7 +58,8 @@ if __name__ == "__main__":
     load_images()
     draw_board()
     draw_pieces(game_state)
-    moves = []
+    moves = []  # Moves list will have a maximum length of two values as tuples containing the start square and the end
+    # square
     while True:
         move_made = False
         for event in pygame.event.get():  # Checks if the game is still running
@@ -69,8 +70,9 @@ if __name__ == "__main__":
                 row = pygame.mouse.get_pos()[1] // square_size
                 moves.append((row, column))
                 if ((row, column) == moves[0] and len(moves) == 2) \
-                        or (game_state.board[row][column] == "--" and len(moves) == 1):
-                    moves = []
+                        or (game_state.board[row][column] == "--" and len(moves) == 1):  # If the user selected the same
+                    # piece in the second move or selected an empty square in the first move
+                    moves = []  # Reset the moves list
                 elif len(moves) == 2:
                     game_state.make_move(moves[0][0], moves[0][1], moves[1][0], moves[1][1])
                     moves = []
