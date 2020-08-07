@@ -12,11 +12,15 @@ class GameState:
                       ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
                       ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
 
+        self.white_turn = True
+
     def make_move(self, start_row, start_column, end_row, end_column):
         piece = self.board[start_row][start_column]
-        if piece != "--":
-            self.board[start_row][start_column] = '--'
-            self.board[end_row][end_column] = piece
+        if self.white_turn and piece[0] == 'w' or not self.white_turn and piece[0] == 'b':
+            if piece != "--":
+                self.board[start_row][start_column] = '--'
+                self.board[end_row][end_column] = piece
+                self.white_turn = not self.white_turn
 
 
 def load_images():  # Loads the images of the pieces
@@ -60,6 +64,8 @@ if __name__ == "__main__":
     draw_pieces(game_state)
     moves = []  # Moves list will have a maximum length of two values as tuples containing the start square and the end
     # square
+    valid_moves = []  # A list of lists containing
+    # valid moves in the form [[(start_row, start_col), (end_row, end_col)], [...], [...]]
     while True:
         move_made = False
         for event in pygame.event.get():  # Checks if the game is still running
@@ -73,10 +79,12 @@ if __name__ == "__main__":
                         or (game_state.board[row][column] == "--" and len(moves) == 1):  # If the user selected the same
                     # piece in the second move or selected an empty square in the first move
                     moves = []  # Reset the moves list
-                elif len(moves) == 2:
+                elif len(moves) == 2 and [moves[0], moves[1]] in valid_moves:
                     game_state.make_move(moves[0][0], moves[0][1], moves[1][0], moves[1][1])
                     moves = []
                     move_made = True
+                elif len(moves) == 2 and [moves[0], moves[1]] not in valid_moves:
+                    moves = []
 
         pygame.display.flip()  # updates the screen
         draw_board()
