@@ -12,6 +12,12 @@ class GameState:
                       ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
                       ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
 
+    def make_move(self, start_row, start_column, end_row, end_column):
+        piece = self.board[start_row][start_column]
+        if piece != "--":
+            self.board[start_row][start_column] = '--'
+            self.board[end_row][end_column] = piece
+
 
 def load_images():
     for item in game_state.board:
@@ -42,6 +48,7 @@ if __name__ == "__main__":
     pygame.init()
     width = height = 512  # Game will run at 512 x 512
     screen = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Chess")
     colors = [pygame.image.load("Images/White.png"), pygame.image.load("Images/Black.png")]  # The black square and the
     # white square images
     squares = 8
@@ -51,9 +58,24 @@ if __name__ == "__main__":
     load_images()
     draw_board()
     draw_pieces(game_state)
+    moves = []
     while True:
+        move_made = False
         for event in pygame.event.get():  # Checks if the game is still running
             if event.type == pygame.QUIT:
                 exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                column = pygame.mouse.get_pos()[0] // square_size
+                row = pygame.mouse.get_pos()[1] // square_size
+                moves.append((row, column))
+                if ((row, column) == moves[0] and len(moves) == 2) \
+                        or (game_state.board[row][column] == "--" and len(moves) == 1):
+                    moves = []
+                elif len(moves) == 2:
+                    game_state.make_move(moves[0][0], moves[0][1], moves[1][0], moves[1][1])
+                    moves = []
+                    move_made = True
+
         pygame.display.flip()  # updates the screen
+        draw_board()
         draw_pieces(game_state)
