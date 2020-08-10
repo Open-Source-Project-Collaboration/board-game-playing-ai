@@ -14,12 +14,27 @@ class GameState:
 
         self.white_turn = True
         self.pawn_promotion = ()  # The row and column of the pawn to be promoted
+        self.en_passant = ()  # The row and the column of the pawn that can perform an 'en passant'
+        self.move_log = []
 
-    def make_move(self, start_row, start_column, end_row, end_column):
-        piece = self.board[start_row][start_column]
-        self.board[start_row][start_column] = '--'
-        self.board[end_row][end_column] = piece
+    def make_move(self, move):
+        piece = self.board[move.start_row][move.start_column]
+        self.board[move.start_row][move.start_column] = '--'  # Replace the starting square with an empty one
+        self.board[move.end_row][move.end_column] = piece  # Replace the ending square with the piece
+
+        if self.en_passant == (move.start_row, move.start_column):  # If the current piece (pawn) has an ability to do
+            # en passant
+
+            if move.piece_to_move[0] == 'w':
+                self.board[move.end_row + 1][move.end_column] = "--"
+                self.en_passant = ()
+
+            elif move.piece_to_move[0] == "b":
+                self.board[move.end_row - 1][move.end_column] = "--"
+                self.en_passant = ()
+
         self.white_turn = not self.white_turn
+        self.move_log.append(move)
 
     def promote_pawn(self, r, c, piece):
         self.board[r][c] = piece
@@ -30,26 +45,64 @@ class GameState:
         if self.board[r][c][0] == 'w':
             next_row = r - 1
             next_two_rows = r - 2
-            opponent_piece = 'b'
+            opponent_piece_color = 'b'
+            fifth_rank = 3
         else:
             next_row = r + 1
             next_two_rows = r + 2
-            opponent_piece = 'w'
+            opponent_piece_color = 'w'
+            fifth_rank = 4
 
         if next_row not in [-1, 8]:  # To avoid list index error when pawn is at the edge
+
             if self.board[next_row][c] == '--':  # Empty square in front of pawn
-                valid_moves_return.append([(r, c), (next_row, c)])
+                valid_moves_return.append(Move((r, c), (next_row, c)))
                 if (r == 6 or r == 1) and self.board[next_two_rows][c] == '--':  # Two empty squares in front of pawn
                     # before moving it
-                    valid_moves_return.append([(r, c), (next_two_rows, c)])
-            if c != 0 and self.board[next_row][c - 1][0] == opponent_piece:  # Opponent piece placed diagonally adjacent
-                valid_moves_return.append([(r, c), (next_row, c - 1)])
-            if c != 7 and self.board[next_row][c + 1][0] == opponent_piece:  # Same but the other side of the diagonal
-                valid_moves_return.append([(r, c), (next_row, c + 1)])
+                    valid_moves_return.append(Move((r, c), (next_two_rows, c)))
+
+            if c != 0 and self.board[next_row][c - 1][0] == opponent_piece_color:
+                # Opponent piece placed diagonally adjacent
+                valid_moves_return.append(Move((r, c), (next_row, c - 1)))
+
+            if c != 7 and self.board[next_row][c + 1][0] == opponent_piece_color:
+                # Same but the other side of the diagonal
+                valid_moves_return.append(Move((r, c), (next_row, c + 1)))
+
+            # En Passant conditions
+            if len(self.move_log) > 0:  # If there are moves in the move log
+                last_move = self.move_log[-1]  # Sees the last move made
+                if c != 0 and r == fifth_rank and self.board[r][c - 1][0] == opponent_piece_color and \
+                        last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2:
+                    self.en_passant = (r, c)
+                    valid_moves_return.append(Move((r, c), (next_row, c - 1)))
+
+                if c != 7 and r == fifth_rank and self.board[r][c + 1][0] == opponent_piece_color and \
+                        last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2:
+                    self.en_passant = (r, c)
+                    valid_moves_return.append(Move((r, c), (next_row, c + 1)))
 
             return valid_moves_return
         else:
             self.pawn_promotion = (r, c)
+
+
+class Move:
+    def __init__(self, start_square, end_square):
+        self.start_square = start_square
+        self.end_square = end_square
+        self.start_row = start_square[0]
+        self.start_column = start_square[1]
+        self.piece_to_move = game_state.board[self.start_row][self.start_column]
+        self.end_row = end_square[0]
+        self.end_column = end_square[1]
+        self.move_id = self.start_row * 10000 + self.start_column * 100 + self.end_row * 10 + self.end_column
+
+    def __eq__(self, other):
+        if isinstance(other, Move):
+            if self.move_id == other.move_id:
+                return True
+        return False
 
 
 def load_images():  # Loads the images of the pieces
@@ -127,25 +180,24 @@ if __name__ == "__main__":
     moves = []  # Moves list will have a maximum length of two values as tuples containing the start square and the end
     # square
 
-    valid_moves = []  # A list of lists containing
-    # valid moves in the form [[(start_row, start_col), (end_row, end_col)], [...], [...]]
+    valid_moves = []  # A list of lists containing valid moves as Move objects; check GameState.Move
 
     highlighted_squares = []
     get_valid_moves()
     while True:
         move_made = False
-        for event in pygame.event.get():  # Checks if the game is still running
+        for event in pygame.event.get():
 
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT:  # Checks if the game is still running
                 exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                column = pygame.mouse.get_pos()[0] // square_size
-                row = pygame.mouse.get_pos()[1] // square_size
+                column = pygame.mouse.get_pos()[0] // square_size  # The column at which the user clicked
+                row = pygame.mouse.get_pos()[1] // square_size  # The row at which the user clicked
                 selected_square = (row, column)
                 piece_selected = game_state.board[row][column]
 
-                if game_state.pawn_promotion != ():
+                if game_state.pawn_promotion != ():  # If there is a pawn to be promoted
                     piece_promote_index = column + 2 - squares // 2  # The list index of the piece to which the pawn is
                     # promoted
                     piece_row = game_state.pawn_promotion[0]  # The row of the pawn to be promoted
@@ -160,16 +212,17 @@ if __name__ == "__main__":
                 elif len(moves) == 0 and (game_state.white_turn and piece_selected[0] != 'b'
                                           or not game_state.white_turn and piece_selected[0] != 'w') or len(moves) >= 1:
                     # If it is white's turn and the piece selected is not black or it is black's turn and the piece
-                    # selected is not white ie: "-" or "b", that is on the first click only. This is ignored on the
-                    # second click
+                    # selected is not white ie: "-" or "b", that is on the first click only.
+                    # Or if it is the second click
 
                     moves.append(selected_square)
                     highlighted_squares.append(selected_square)
 
                     for valid_move in valid_moves:
-                        if len(moves) == 1 and valid_move[0] == selected_square:  # Adds the valid moves of the selected
-                            # piece to the highlighted squares
-                            highlighted_squares.append(valid_move[1])
+                        if len(moves) == 1 and valid_move.start_square == selected_square:
+                            # Adds the valid moves of the selected piece to the highlighted squares if the
+                            # selected square is a start_square in a Move object in the valid_moves list
+                            highlighted_squares.append(valid_move.end_square)
 
                     if (selected_square == moves[0] and len(moves) == 2) \
                             or (piece_selected == "--" and len(moves) == 1):
@@ -178,9 +231,9 @@ if __name__ == "__main__":
                         moves = []  # Reset the moves list
                         highlighted_squares = []
 
-                    elif len(moves) == 2 and [moves[0], moves[1]] in valid_moves:  # If the user picked a valid square
-                        # at the second click
-                        game_state.make_move(moves[0][0], moves[0][1], moves[1][0], moves[1][1])
+                    elif len(moves) == 2 and Move(moves[0], moves[1]) in valid_moves:
+                        # If the user picked a valid square at the second click
+                        game_state.make_move(Move((moves[0]), (moves[1])))
                         moves = []
                         highlighted_squares = []
                         move_made = True
