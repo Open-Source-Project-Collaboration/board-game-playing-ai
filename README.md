@@ -9,7 +9,7 @@ But go try it!
 1. Create a new env by doing:
 
 ``` shell
-$ python3 -m env venv
+$ python3 -m venv env
 $ source env/bin/activate
 (env) $ # You should see the (env)!
 ```
