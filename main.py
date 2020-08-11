@@ -114,6 +114,7 @@ def load_images():  # Loads the images of the pieces
 
 
 def draw_board():
+
     for r in range(squares):
         for c in range(squares):
             color = colors[(r + c) % 2]  # Picks either the white square or the black one
@@ -122,6 +123,8 @@ def draw_board():
 
             if (r, c) in highlighted_squares:
                 screen.blit(colors[2], pygame.Rect(c * square_size, r * square_size, square_size, square_size))
+
+
 
     if game_state.pawn_promotion != ():  # If there is a pawn to be promoted
         surface = pygame.Surface((width, height))
@@ -140,6 +143,10 @@ def draw_board():
         screen.blit(promotion_text,
                     pygame.Rect(width // 2 - round(square_size * 3.5), square_size, square_size * 4, square_size * 4))
 
+    # Add a score / info tab at bottom of screen
+    pygame.draw.rect(screen, (255,255,255), (0, 513 ,512, 30))
+    text = font.render("White's Turn" if game_state.white_turn else "Black's Turn", True, (0,0,0) , (255,255,255))
+    screen.blit(text, (5, 517))
 
 def draw_pieces(gs):
     for r in range(squares):
@@ -163,7 +170,7 @@ def get_valid_moves():
 if __name__ == "__main__":
     pygame.init()
     width = height = 512  # Game will run at 512 x 512
-    screen = pygame.display.set_mode((width, height))
+    screen = pygame.display.set_mode((width, height + 30))
     pygame.display.set_caption("Chess")
     colors = [pygame.image.load("Images/White.png"), pygame.image.load("Images/Black.png"),
               pygame.image.load("Images/Highlight.png")]
@@ -174,8 +181,9 @@ if __name__ == "__main__":
     game_state = GameState()
     pieces_images = {}  # A dictionary with the chess piece notations as keys and the images as values
     promotions = ['B', 'N', 'R', 'Q']  # The pieces available for pawn promotion
-    font = pygame.font.SysFont("Arial", 24)  # The font which the game will use
+    font = pygame.font.SysFont("Arial", 18)  # The font which the game will use
     promotion_text = font.render("To which piece would you like to promote the pawn?", True, (255, 255, 255))
+
     load_images()
     moves = []  # Moves list will have a maximum length of two values as tuples containing the start square and the end
     # square
