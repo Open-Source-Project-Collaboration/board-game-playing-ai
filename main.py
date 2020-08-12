@@ -77,7 +77,7 @@ class GameState:
                     self.en_passant = (r, c)
                     valid_moves_return.append(Move((r, c), (next_row, c - 1)))
 
-                if c != 7 and r == fifth_rank and self.board[r][c + 1][0] == opponent_piece_color and \
+                elif c != 7 and r == fifth_rank and self.board[r][c + 1][0] == opponent_piece_color and \
                         last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2:
                     self.en_passant = (r, c)
                     valid_moves_return.append(Move((r, c), (next_row, c + 1)))
@@ -114,7 +114,6 @@ def load_images():  # Loads the images of the pieces
 
 
 def draw_board():
-
     for r in range(squares):
         for c in range(squares):
             color = colors[(r + c) % 2]  # Picks either the white square or the black one
@@ -123,8 +122,6 @@ def draw_board():
 
             if (r, c) in highlighted_squares:
                 screen.blit(colors[2], pygame.Rect(c * square_size, r * square_size, square_size, square_size))
-
-
 
     if game_state.pawn_promotion != ():  # If there is a pawn to be promoted
         surface = pygame.Surface((width, height))
@@ -144,9 +141,11 @@ def draw_board():
                     pygame.Rect(width // 2 - round(square_size * 3.5), square_size, square_size * 4, square_size * 4))
 
     # Add a score / info tab at bottom of screen
-    pygame.draw.rect(screen, (255,255,255), (0, 513 ,512, 30))
-    text = font.render("White's Turn" if game_state.white_turn else "Black's Turn", True, (0,0,0) , (255,255,255))
-    screen.blit(text, (5, 517))
+    pygame.draw.rect(screen, (255, 255, 255), (0, 513, 512, 30))
+    turn_text = status_font.render("White's Turn" if game_state.white_turn
+                                   else "Black's Turn", True, (0, 0, 0), (255, 255, 255))
+    screen.blit(turn_text, (5, 517))
+
 
 def draw_pieces(gs):
     for r in range(squares):
@@ -170,7 +169,8 @@ def get_valid_moves():
 if __name__ == "__main__":
     pygame.init()
     width = height = 512  # Game will run at 512 x 512
-    screen = pygame.display.set_mode((width, height + 30))
+    bar_height = 30
+    screen = pygame.display.set_mode((width, height + bar_height))
     pygame.display.set_caption("Chess")
     colors = [pygame.image.load("Images/White.png"), pygame.image.load("Images/Black.png"),
               pygame.image.load("Images/Highlight.png")]
@@ -181,8 +181,9 @@ if __name__ == "__main__":
     game_state = GameState()
     pieces_images = {}  # A dictionary with the chess piece notations as keys and the images as values
     promotions = ['B', 'N', 'R', 'Q']  # The pieces available for pawn promotion
-    font = pygame.font.SysFont("Arial", 18)  # The font which the game will use
-    promotion_text = font.render("To which piece would you like to promote the pawn?", True, (255, 255, 255))
+    promotion_font = pygame.font.SysFont("Arial", 24)
+    status_font = pygame.font.SysFont("Arial", 18)
+    promotion_text = promotion_font.render("To which piece would you like to promote the pawn?", True, (255, 255, 255))
 
     load_images()
     moves = []  # Moves list will have a maximum length of two values as tuples containing the start square and the end
@@ -203,7 +204,10 @@ if __name__ == "__main__":
                 column = pygame.mouse.get_pos()[0] // square_size  # The column at which the user clicked
                 row = pygame.mouse.get_pos()[1] // square_size  # The row at which the user clicked
                 selected_square = (row, column)
-                piece_selected = game_state.board[row][column]
+                if row <= 7:
+                    piece_selected = game_state.board[row][column]
+                else:
+                    piece_selected = "--"
 
                 if game_state.pawn_promotion != ():  # If there is a pawn to be promoted
                     piece_promote_index = column + 2 - squares // 2  # The list index of the piece to which the pawn is
