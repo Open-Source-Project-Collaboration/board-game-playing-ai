@@ -13,25 +13,32 @@ class GameState:
                       ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]]
 
         self.white_turn = True
+
         self.pawn_promotion = ()  # The row and column of the pawn to be promoted
-        self.en_passant = ()  # The row and the column of the pawn that can perform an 'en passant'
-        self.move_log = []
+        self.en_passant = []  # The row and the column of the pawn that can perform an 'en passant'
+        self.en_passant_length = -1  # The required length of the move log in order to do 'en passant'
+        # This variable is used to cancel the en passant ability if other moves were made
+
+        self.move_log = []  # A list containing all moves performed
 
     def make_move(self, move):
         piece = self.board[move.start_row][move.start_column]
         self.board[move.start_row][move.start_column] = '--'  # Replace the starting square with an empty one
         self.board[move.end_row][move.end_column] = piece  # Replace the ending square with the piece
 
-        if self.en_passant == (move.start_row, move.start_column):  # If the current piece (pawn) has an ability to do
-            # en passant
+        if self.en_passant:
+            if self.en_passant_length != len(self.move_log):
+                self.en_passant = []
+            if (move.start_row, move.start_column) in self.en_passant:
+                # If the current piece (pawn) has an ability to do en passant
 
-            if move.piece_to_move[0] == 'w':
-                self.board[move.end_row + 1][move.end_column] = "--"
-                self.en_passant = ()
+                if move.piece_to_move[0] == 'w':
+                    self.board[move.end_row + 1][move.end_column] = "--"
+                    self.en_passant = []
 
-            elif move.piece_to_move[0] == "b":
-                self.board[move.end_row - 1][move.end_column] = "--"
-                self.en_passant = ()
+                elif move.piece_to_move[0] == "b":
+                    self.board[move.end_row - 1][move.end_column] = "--"
+                    self.en_passant = []
 
         self.white_turn = not self.white_turn
         self.move_log.append(move)
@@ -39,7 +46,7 @@ class GameState:
     def promote_pawn(self, r, c, piece):
         self.board[r][c] = piece
 
-    def get_pawn_moves(self, r, c):  # TODO: Add "en passant"
+    def get_pawn_moves(self, r, c):
         valid_moves_return = []
 
         if self.board[r][c][0] == 'w':
@@ -73,14 +80,20 @@ class GameState:
             if len(self.move_log) > 0:  # If there are moves in the move log
                 last_move = self.move_log[-1]  # Sees the last move made
                 if c != 0 and r == fifth_rank and self.board[r][c - 1][0] == opponent_piece_color and \
-                        last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2:
-                    self.en_passant = (r, c)
+                        last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2 \
+                        and last_move.end_column == c - 1:
+                    self.en_passant.append((r, c))
+                    self.en_passant_length = len(self.move_log)
                     valid_moves_return.append(Move((r, c), (next_row, c - 1)))
 
-                elif c != 7 and r == fifth_rank and self.board[r][c + 1][0] == opponent_piece_color and \
-                        last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2:
-                    self.en_passant = (r, c)
+                if c != 7 and r == fifth_rank and self.board[r][c + 1][0] == opponent_piece_color and \
+                        last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2 \
+                        and last_move.end_column == c + 1:
+                    self.en_passant.append((r, c))
+                    self.en_passant_length = len(self.move_log)
                     valid_moves_return.append(Move((r, c), (next_row, c + 1)))
+                # else:
+                #     self.en_passant = ()
 
             return valid_moves_return
         else:
@@ -117,8 +130,8 @@ def draw_board():
     for r in range(squares):
         for c in range(squares):
             color = colors[(r + c) % 2]  # Picks either the white square or the black one
-            screen.blit(color, pygame.Rect(c * square_size, r * square_size, square_size, square_size))  # Adds the
-            # picked square
+            pygame.draw.rect(screen, color, pygame.Rect(c * square_size, r * square_size, square_size, square_size))
+            # Adds the picked square
 
             if (r, c) in highlighted_squares:
                 screen.blit(colors[2], pygame.Rect(c * square_size, r * square_size, square_size, square_size))
@@ -172,12 +185,19 @@ if __name__ == "__main__":
     bar_height = 30
     screen = pygame.display.set_mode((width, height + bar_height))
     pygame.display.set_caption("Chess")
-    colors = [pygame.image.load("Images/White.png"), pygame.image.load("Images/Black.png"),
-              pygame.image.load("Images/Highlight.png")]
-    # The black square, white square images and highlight square images
-
     squares = 8
     square_size = height // squares
+
+    white_color = (250, 235, 239)
+    black_color = (153, 164, 231)
+    green_color = (181, 230, 29)
+    highlight_surface = pygame.Surface((square_size, square_size))
+    highlight_surface.fill(green_color)
+    highlight_surface.set_alpha(100)
+    colors = [white_color, black_color,
+              highlight_surface]
+    # The black square, white square images and highlight square images
+
     game_state = GameState()
     pieces_images = {}  # A dictionary with the chess piece notations as keys and the images as values
     promotions = ['B', 'N', 'R', 'Q']  # The pieces available for pawn promotion
@@ -260,6 +280,7 @@ if __name__ == "__main__":
         if move_made:
             get_valid_moves()
             move_made = False
+            print(game_state.en_passant)
         draw_board()
         if game_state.pawn_promotion == ():
             draw_pieces(game_state)
