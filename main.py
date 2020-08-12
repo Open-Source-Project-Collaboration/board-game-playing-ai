@@ -53,12 +53,12 @@ class GameState:
             next_row = r - 1
             next_two_rows = r - 2
             opponent_piece_color = 'b'
-            fifth_rank = 3
+            fifth_rank = 3  # The row at which the white pawn is at fifth rank
         else:
             next_row = r + 1
             next_two_rows = r + 2
             opponent_piece_color = 'w'
-            fifth_rank = 4
+            fifth_rank = 4  # The row at which the black pawn is at fifth rank
 
         if next_row not in [-1, 8]:  # To avoid list index error when pawn is at the edge
 
@@ -92,15 +92,37 @@ class GameState:
                     self.en_passant.append((r, c))
                     self.en_passant_length = len(self.move_log)
                     valid_moves_return.append(Move((r, c), (next_row, c + 1)))
-                # else:
-                #     self.en_passant = ()
 
             return valid_moves_return
         else:
             self.pawn_promotion = (r, c)
 
+    def get_knight_moves(self, r, c):
+        valid_moves_return = []
+        knight_color = self.board[r][c][0]
+        next_two_rows = r - 2
+        next_row = r - 1
+        previous_two_rows = r + 2
+        previous_row = r + 1
 
-class Move:
+        for item in [next_row, previous_row]:  # One square horizontally, two squares vertically move
+            if 0 <= item <= 7:
+                if c + 2 <= 7 and self.board[item][c + 2][0] != knight_color:
+                    valid_moves_return.append(Move((r, c), (item, c + 2)))
+                if c - 2 >= 0 and self.board[item][c - 2][0] != knight_color:
+                    valid_moves_return.append(Move((r, c), (item, c - 2)))
+
+        for item in [next_two_rows, previous_two_rows]:  # Two squares horizontally, one square vertically move
+            if 0 <= item <= 7:
+                if c + 1 <= 7 and self.board[item][c + 1][0] != knight_color:
+                    valid_moves_return.append(Move((r, c), (item, c + 1)))
+                if c - 1 >= 0 and self.board[item][c - 1][0] != knight_color:
+                    valid_moves_return.append(Move((r, c), (item, c - 1)))
+
+        return valid_moves_return
+
+
+class Move:  # A class to deal with moves performed
     def __init__(self, start_square, end_square):
         self.start_square = start_square
         self.end_square = end_square
@@ -170,13 +192,20 @@ def draw_pieces(gs):
 
 
 def get_valid_moves():
+    available_moves = None
+
     for r in range(squares):
         for c in range(squares):
-            if game_state.board[r][c][1] == "P":
+            piece = game_state.board[r][c][1]
+
+            if piece == "P":
                 available_moves = game_state.get_pawn_moves(r, c)
-                if available_moves is not None:
-                    for item in available_moves:
-                        valid_moves.append(item)
+            elif piece == "N":
+                available_moves = game_state.get_knight_moves(r, c)
+
+            if available_moves is not None:
+                for item in available_moves:
+                    valid_moves.append(item)
 
 
 if __name__ == "__main__":
@@ -280,7 +309,6 @@ if __name__ == "__main__":
         if move_made:
             get_valid_moves()
             move_made = False
-            print(game_state.en_passant)
         draw_board()
         if game_state.pawn_promotion == ():
             draw_pieces(game_state)
