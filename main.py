@@ -191,21 +191,23 @@ class GameState:
 
         return valid_moves_return
 
-
     def get_rook_moves(self, r, c):
         current_player = self.board[r][c][0]
         enemy_player = 'w' if current_player == 'b' else 'b'
-        directions = [(0,1), (1,0), (-1,0), (0,-1)] # Directions to check
-        valid_moves = []
-        for x,y in directions:
+        directions = [(0, 1), (1, 0), (-1, 0), (0, -1)]  # Directions to check
+        valid_moves_return = []
+        for x, y in directions:
             for dist in range(1, 8):
-                newr, newc = r + x*dist, c + y*dist
-                if not 0 <= newr <= 7 or not 0 <= newc <= 7: break
+                newr, newc = r + x * dist, c + y * dist
+                if not 0 <= newr <= 7 or not 0 <= newc <= 7:
+                    break
                 current_tile = self.board[newr][newc][0]
-                if current_tile == current_player: break # stop searching if we reach our piece
-                valid_moves.append(Move((r,c), (newr,newc))) # for any other cases, it's a valid move
-                if current_tile == enemy_player: break # stop searching if we reach an enemy piece
-        return valid_moves
+                if current_tile == current_player:
+                    break  # stop searching if we reach our piece
+                valid_moves.append(Move((r, c), (newr, newc)))  # for any other cases, it's a valid move
+                if current_tile == enemy_player:
+                    break  # stop searching if we reach an enemy piece
+        return valid_moves_return
 
 
 class Move:  # A class to deal with moves performed
