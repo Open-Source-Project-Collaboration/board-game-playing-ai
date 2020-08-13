@@ -192,6 +192,22 @@ class GameState:
         return valid_moves_return
 
 
+    def get_rook_moves(self, r, c):
+        current_player = self.board[r][c][0]
+        enemy_player = 'w' if current_player == 'b' else 'b'
+        directions = [(0,1), (1,0), (-1,0), (0,-1)] # Directions to check
+        valid_moves = []
+        for x,y in directions:
+            for dist in range(1, 8):
+                newr, newc = r + x*dist, c + y*dist
+                if not 0 <= newr <= 7 or not 0 <= newc <= 7: break
+                current_tile = self.board[newr][newc][0]
+                if current_tile == current_player: break # stop searching if we reach our piece
+                valid_moves.append(Move((r,c), (newr,newc))) # for any other cases, it's a valid move
+                if current_tile == enemy_player: break # stop searching if we reach an enemy piece
+        return valid_moves
+
+
 class Move:  # A class to deal with moves performed
     def __init__(self, start_square, end_square):
         self.start_square = start_square
@@ -274,6 +290,8 @@ def get_valid_moves():
                 available_moves = game_state.get_knight_moves(r, c)
             elif piece == "B":
                 available_moves = game_state.get_bishop_moves(r, c)
+            elif piece == "R":
+                available_moves = game_state.get_rook_moves(r, c)
 
             if available_moves is not None:
                 for item in available_moves:
