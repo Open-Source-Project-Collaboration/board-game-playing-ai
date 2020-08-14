@@ -121,80 +121,13 @@ class GameState:
 
         return valid_moves_return
 
-    def get_bishop_moves(self, r, c):
-        bishop_color = self.board[r][c][0]
-
-        if bishop_color == 'w':
-            opponent_color = 'b'
-        else:
-            opponent_color = 'w'
-
-        valid_moves_return = []
-        r_test = r  # Row variable to be used inside the while loop
-        c_test = c  # Column variable to be used inside the while loop
-
-        while r_test + 1 <= 7 and c_test + 1 <= 7:  # Bottom right diagonal
-            # When it is an empty square, add that to the valid moves and continue checking
-            if self.board[r_test + 1][c_test + 1] == '--':
-                valid_moves_return.append(Move((r, c), (r_test + 1, c_test + 1)))
-                r_test += 1
-                c_test += 1
-            # When it is an opponent piece, add that to the valid moves and stop checking
-            elif self.board[r_test + 1][c_test + 1][0] == opponent_color:
-                valid_moves_return.append(Move((r, c), (r_test + 1, c_test + 1)))
-                break
-            # When it is a friendly piece, stop checking
-            elif self.board[r_test + 1][c_test + 1][0] == bishop_color:
-                break
-        r_test = r
-        c_test = c
-
-        while r_test - 1 >= 0 and c_test - 1 >= 0:  # Upper left diagonal
-            # Same logic as above
-            if self.board[r_test - 1][c_test - 1] == '--':
-                valid_moves_return.append(Move((r, c), (r_test - 1, c_test - 1)))
-                r_test -= 1
-                c_test -= 1
-            elif self.board[r_test - 1][c_test - 1][0] == opponent_color:
-                valid_moves_return.append(Move((r, c), (r_test - 1, c_test - 1)))
-                break
-            elif self.board[r_test - 1][c_test - 1][0] == bishop_color:
-                break
-        r_test = r
-        c_test = c
-
-        while r_test + 1 <= 7 and c_test - 1 >= 0:  # Bottom left diagonal
-            # Same logic as above
-            if self.board[r_test + 1][c_test - 1] == '--':
-                valid_moves_return.append(Move((r, c), (r_test + 1, c_test - 1)))
-                r_test += 1
-                c_test -= 1
-            elif self.board[r_test + 1][c_test - 1][0] == opponent_color:
-                valid_moves_return.append(Move((r, c), (r_test + 1, c_test - 1)))
-                break
-            elif self.board[r_test + 1][c_test - 1][0] == bishop_color:
-                break
-        r_test = r
-        c_test = c
-
-        while r_test - 1 >= 0 and c_test + 1 <= 7:  # Bottom right diagonal
-            # Same logic as above
-            if self.board[r_test - 1][c_test + 1] == '--':
-                valid_moves_return.append(Move((r, c), (r_test - 1, c_test + 1)))
-                r_test -= 1
-                c_test += 1
-            elif self.board[r_test - 1][c_test + 1][0] == opponent_color:
-                valid_moves_return.append(Move((r, c), (r_test - 1, c_test + 1)))
-                break
-            elif self.board[r_test - 1][c_test + 1][0] == bishop_color:
-                break
-
-        return valid_moves_return
-
-    def get_rook_moves(self, r, c):
+    def QBR_moves(self, piece, r, c):
+        directions = []
+        if piece == "Q": directions = [(1,1), (1,-1), (-1,1), (-1,-1), (0,1), (1,0), (-1,0), (0,-1)]
+        elif piece == "B": directions = [(1,1), (1,-1), (-1,1), (-1,-1)]
+        elif piece == "R": directions = [(0, 1), (1, 0), (-1, 0), (0, -1)]
         current_player = self.board[r][c][0]
         enemy_player = 'w' if current_player == 'b' else 'b'
-        directions = [(0, 1), (1, 0), (-1, 0), (0, -1)]  # Directions to check
         valid_moves_return = []
         for x, y in directions:
             for dist in range(1, 8):
@@ -208,7 +141,6 @@ class GameState:
                 if current_tile == enemy_player:
                     break  # stop searching if we reach an enemy piece
         return valid_moves_return
-
 
 class Move:  # A class to deal with moves performed
     def __init__(self, start_square, end_square):
@@ -294,9 +226,11 @@ def get_valid_moves():
             elif piece == "N":
                 available_moves = game_state.get_knight_moves(r, c)
             elif piece == "B":
-                available_moves = game_state.get_bishop_moves(r, c)
+                available_moves = game_state.QBR_moves("B", r, c)
             elif piece == "R":
-                available_moves = game_state.get_rook_moves(r, c)
+                available_moves = game_state.QBR_moves("R", r, c)
+            elif piece == "Q":
+                available_moves = game_state.QBR_moves("Q", r, c)
 
             if available_moves is not None:
                 for item in available_moves:
