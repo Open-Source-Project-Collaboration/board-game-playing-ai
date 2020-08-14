@@ -121,26 +121,30 @@ class GameState:
 
         return valid_moves_return
 
-    def QBR_moves(self, piece, r, c):
+    def qbr_moves(self, piece, r, c):
         directions = []
-        if piece == "Q": directions = [(1,1), (1,-1), (-1,1), (-1,-1), (0,1), (1,0), (-1,0), (0,-1)]
-        elif piece == "B": directions = [(1,1), (1,-1), (-1,1), (-1,-1)]
-        elif piece == "R": directions = [(0, 1), (1, 0), (-1, 0), (0, -1)]
+        if piece == "Q":
+            directions = [(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 1), (1, 0), (-1, 0), (0, -1)]
+        elif piece == "B":
+            directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+        elif piece == "R":
+            directions = [(0, 1), (1, 0), (-1, 0), (0, -1)]
         current_player = self.board[r][c][0]
         enemy_player = 'w' if current_player == 'b' else 'b'
         valid_moves_return = []
         for x, y in directions:
             for dist in range(1, 8):
-                newr, newc = r + x * dist, c + y * dist
-                if not 0 <= newr <= 7 or not 0 <= newc <= 7:
+                new_r, new_c = r + x * dist, c + y * dist
+                if not 0 <= new_r <= 7 or not 0 <= new_c <= 7:
                     break
-                current_tile = self.board[newr][newc][0]
+                current_tile = self.board[new_r][new_c][0]
                 if current_tile == current_player:
                     break  # stop searching if we reach our piece
-                valid_moves.append(Move((r, c), (newr, newc)))  # for any other cases, it's a valid move
+                valid_moves.append(Move((r, c), (new_r, new_c)))  # for any other cases, it's a valid move
                 if current_tile == enemy_player:
                     break  # stop searching if we reach an enemy piece
         return valid_moves_return
+
 
 class Move:  # A class to deal with moves performed
     def __init__(self, start_square, end_square):
@@ -169,7 +173,6 @@ def load_images():  # Loads the images of the pieces
 
 
 def draw_board():
-
     for r in range(squares):
         for c in range(squares):
             color = colors[(r + c) % 2]  # Picks either the white square or the black one
@@ -178,8 +181,6 @@ def draw_board():
 
             if (r, c) in highlighted_squares:
                 screen.blit(colors[2], pygame.Rect(c * square_size, r * square_size, square_size, square_size))
-
-
 
     if game_state.pawn_promotion != ():  # If there is a pawn to be promoted
         surface = pygame.Surface((width, height))
@@ -226,11 +227,11 @@ def get_valid_moves():
             elif piece == "N":
                 available_moves = game_state.get_knight_moves(r, c)
             elif piece == "B":
-                available_moves = game_state.QBR_moves("B", r, c)
+                available_moves = game_state.qbr_moves("B", r, c)
             elif piece == "R":
-                available_moves = game_state.QBR_moves("R", r, c)
+                available_moves = game_state.qbr_moves("R", r, c)
             elif piece == "Q":
-                available_moves = game_state.QBR_moves("Q", r, c)
+                available_moves = game_state.qbr_moves("Q", r, c)
 
             if available_moves is not None:
                 for item in available_moves:
