@@ -48,8 +48,9 @@ class GameState:
 
     def get_pawn_moves(self, r, c):
         valid_moves_return = []
+        pawn_color = self.board[r][c][0]
 
-        if self.board[r][c][0] == 'w':
+        if pawn_color == 'w':
             next_row = r - 1
             next_two_rows = r - 2
             opponent_piece_color = 'b'
@@ -64,7 +65,8 @@ class GameState:
 
             if self.board[next_row][c] == '--':  # Empty square in front of pawn
                 valid_moves_return.append(Move((r, c), (next_row, c)))
-                if (r == 6 or r == 1) and self.board[next_two_rows][c] == '--':  # Two empty squares in front of pawn
+                if (r == 6 and pawn_color == 'w') or (r == 1 and pawn_color == 'b') \
+                        and self.board[next_two_rows][c] == '--':  # Two empty squares in front of pawn
                     # before moving it
                     valid_moves_return.append(Move((r, c), (next_two_rows, c)))
 
