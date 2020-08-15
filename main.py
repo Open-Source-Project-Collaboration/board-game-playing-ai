@@ -20,6 +20,7 @@ class GameState:
         # This variable is used to cancel the en passant ability if other moves were made
 
         self.move_log = []  # A list containing all moves performed
+        self.castling = [(0, 7), (7, 0), (0, 0), (7, 7)]
 
     def make_move(self, move):
         piece = self.board[move.start_row][move.start_column]
@@ -33,12 +34,20 @@ class GameState:
                 # If the current piece (pawn) has an ability to do en passant
 
                 if move.piece_to_move[0] == 'w':
+                    move.piece_to_capture = self.board[move.end_row + 1][move.end_column]
                     self.board[move.end_row + 1][move.end_column] = "--"
+                    move.end_row, move.end_column = move.end_row + 1, move.end_column
                     self.en_passant = []
 
                 elif move.piece_to_move[0] == "b":
+                    move.piece_to_capture = self.board[move.end_row - 1][move.end_column]
                     self.board[move.end_row - 1][move.end_column] = "--"
+                    move.end_row, move.end_column = move.end_row - 1, move.end_column
                     self.en_passant = []
+
+        if move.piece_to_move[1] == "K":
+            self.castling.remove((move.start_row, 0))
+            self.castling.remove((move.start_row, 7))
 
         self.white_turn = not self.white_turn
         self.move_log.append(move)
@@ -50,8 +59,9 @@ class GameState:
             # Makes the move in the opposite direction
 
             game_state.board[move_to_undo.end_row][move_to_undo.end_column] = move_to_undo.piece_to_capture
+            # Returns the captured piece to its place
 
-            del(self.move_log[-1], self.move_log[-1])
+            del (self.move_log[-1], self.move_log[-1])
             # Deletes the last two moves from the move log (original move, opposite direction)
 
     def promote_pawn(self, r, c, piece):
@@ -158,6 +168,21 @@ class GameState:
                     break  # stop searching if we reach an enemy piece
         return valid_moves_return
 
+    def get_castling(self, r, c):
+        valid_moves_return = []
+        directions = [1, -1]  # Directions that determine how the search will move
+        for direction in directions:
+            for dist in range(1, 5):
+                if 0 <= c + dist * direction <= 7:
+                    tile = self.board[r][c + dist * direction]
+                    if tile != '--' and tile[1] != 'K':  # If it is neither an empty square nor a king
+                        break
+                    elif tile[1] == 'K' and (r, c) in self.castling:
+                        # The king can jump two columns according to this formula
+                        valid_moves_return.append(Move((r, c + dist * direction), (r, c + (dist - 2) * direction)))
+                        break
+        return valid_moves_return
+
 
 class Move:  # A class to deal with moves performed
     def __init__(self, start_square, end_square):
@@ -245,13 +270,16 @@ def get_valid_moves():
                 available_moves = game_state.qbr_moves("B", r, c)
             elif piece == "R":
                 available_moves = game_state.qbr_moves("R", r, c)
+                if c in [0, 7]:
+                    castling_moves = game_state.get_castling(r, c)
+                    for item in castling_moves:
+                        available_moves.append(item)
             elif piece == "Q":
                 available_moves = game_state.qbr_moves("Q", r, c)
 
-            if available_moves is not None:
-                for item in available_moves:
-                    if item.piece_to_capture[1] != 'K':
-                        valid_moves.append(item)
+            for item in available_moves:
+                if item.piece_to_capture[1] != 'K':
+                    valid_moves.append(item)
 
 
 if __name__ == "__main__":
