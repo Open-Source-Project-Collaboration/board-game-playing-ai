@@ -43,6 +43,15 @@ class GameState:
         self.white_turn = not self.white_turn
         self.move_log.append(move)
 
+    def undo_move(self):
+        if self.move_log:  # If the move log is not empty
+            move_to_undo = self.move_log[-1]  # The last move
+            self.make_move(Move(move_to_undo.end_square, move_to_undo.start_square))
+            # Makes the move in the opposite direction
+
+            del(self.move_log[-1], self.move_log[-1])
+            # Deletes the last two moves from the move log (original move, opposite direction)
+
     def promote_pawn(self, r, c, piece):
         self.board[r][c] = piece
 
@@ -79,7 +88,7 @@ class GameState:
                 valid_moves_return.append(Move((r, c), (next_row, c + 1)))
 
             # En Passant conditions
-            if len(self.move_log) > 0:  # If there are moves in the move log
+            if self.move_log:  # If there are moves in the move log
                 last_move = self.move_log[-1]  # Sees the last move made
                 if c != 0 and r == fifth_rank and self.board[r][c - 1][0] == opponent_piece_color and \
                         last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2 \
@@ -284,7 +293,7 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:  # Checks if the game is still running
                 exit()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 column = pygame.mouse.get_pos()[0] // square_size  # The column at which the user clicked
                 row = pygame.mouse.get_pos()[1] // square_size  # The row at which the user clicked
                 selected_square = (row, column)
@@ -339,6 +348,11 @@ if __name__ == "__main__":
                         # square at the second click
                         moves = []
                         highlighted_squares = []
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_z:
+                    game_state.undo_move()
+                    move_made = True
 
         pygame.display.flip()  # updates the screen
         if move_made:
