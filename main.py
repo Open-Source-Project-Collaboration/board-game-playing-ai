@@ -141,8 +141,8 @@ class GameState:
                     break
                 current_tile = self.board[new_r][new_c][0]
                 if current_tile == current_player:
-                    break  # stop searching if we reach our piece
-                valid_moves.append(Move((r, c), (new_r, new_c)))  # for any other cases, it's a valid move
+                    break  # stop searching if we reach a friendly piece
+                valid_moves_return.append(Move((r, c), (new_r, new_c)))  # for any other cases, it's a valid move
                 if current_tile == enemy_player:
                     break  # stop searching if we reach an enemy piece
         return valid_moves_return
@@ -154,7 +154,10 @@ class Move:  # A class to deal with moves performed
         self.end_square = end_square
         self.start_row = start_square[0]
         self.start_column = start_square[1]
+        self.end_row = end_square[0]
+        self.end_column = end_square[1]
         self.piece_to_move = game_state.board[self.start_row][self.start_column]
+        self.piece_to_capture = game_state.board[self.end_row][self.end_column]
         self.end_row = end_square[0]
         self.end_column = end_square[1]
         self.move_id = self.start_row * 10000 + self.start_column * 100 + self.end_row * 10 + self.end_column
@@ -223,7 +226,6 @@ def get_valid_moves():
     for r in range(squares):
         for c in range(squares):
             piece = game_state.board[r][c][1]
-
             if piece == "P":
                 available_moves = game_state.get_pawn_moves(r, c)
             elif piece == "N":
@@ -237,7 +239,8 @@ def get_valid_moves():
 
             if available_moves is not None:
                 for item in available_moves:
-                    valid_moves.append(item)
+                    if item.piece_to_capture[1] != 'K':
+                        valid_moves.append(item)
 
 
 if __name__ == "__main__":
