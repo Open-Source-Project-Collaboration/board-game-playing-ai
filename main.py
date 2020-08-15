@@ -49,6 +49,8 @@ class GameState:
             self.make_move(Move(move_to_undo.end_square, move_to_undo.start_square))
             # Makes the move in the opposite direction
 
+            game_state.board[move_to_undo.end_row][move_to_undo.end_column] = move_to_undo.piece_to_capture
+
             del(self.move_log[-1], self.move_log[-1])
             # Deletes the last two moves from the move log (original move, opposite direction)
 
@@ -293,7 +295,7 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:  # Checks if the game is still running
                 exit()
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 column = pygame.mouse.get_pos()[0] // square_size  # The column at which the user clicked
                 row = pygame.mouse.get_pos()[1] // square_size  # The row at which the user clicked
                 selected_square = (row, column)
@@ -349,7 +351,7 @@ if __name__ == "__main__":
                         moves = []
                         highlighted_squares = []
 
-            elif event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_z:
                     game_state.undo_move()
                     move_made = True
