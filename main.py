@@ -37,32 +37,55 @@ class GameState:
                     move.piece_to_capture = self.board[move.end_row + 1][move.end_column]
                     self.board[move.end_row + 1][move.end_column] = "--"
                     move.end_row, move.end_column = move.end_row + 1, move.end_column
+                    # To avoid bugs when undoing en passant moves
+
                     self.en_passant = []
 
                 elif move.piece_to_move[0] == "b":
                     move.piece_to_capture = self.board[move.end_row - 1][move.end_column]
                     self.board[move.end_row - 1][move.end_column] = "--"
                     move.end_row, move.end_column = move.end_row - 1, move.end_column
+                    # To avoid bugs when undoing en passant moves
+
                     self.en_passant = []
 
         if move.piece_to_move[1] == "K":
-            self.castling.remove((move.start_row, 0))
-            self.castling.remove((move.start_row, 7))
+            kingside_direction = 1  # The left side of the king
+            if abs(move.end_column - move.start_column) == 2:
+                direction = (move.end_column - move.start_column) // 2  # Direction can be +1 or -1
+                rook_to_castle_col = 7 if direction == kingside_direction else 0
+                rook_to_castle = self.board[move.start_row][rook_to_castle_col]
+                self.board[move.start_row][rook_to_castle_col] = '--'
+                self.board[move.start_row][move.start_column + 1 * direction] = rook_to_castle
+                # The rook jumps to the square over which the king crossed
+
+            # Remove the possible castling moves in that row when the king is moved
+            if (move.start_row, 0) in self.castling:
+                self.castling.remove((move.start_row, 0))
+            if (move.start_row, 7) in self.castling:
+                self.castling.remove((move.start_row, 7))
+
+        # If a rook is moved, remove its castling moves
+        elif move.piece_to_move[1] == "R":
+            if (move.start_row, move.start_column) in self.castling:
+                self.castling.remove((move.start_row, move.start_column))
 
         self.white_turn = not self.white_turn
         self.move_log.append(move)
 
-    def undo_move(self):
+    def undo_move(self):  # Causes bugs with en passant and castling if used with them (no need to fix that since the
+        # user won't be able to use the function)
+
         if self.move_log:  # If the move log is not empty
-            move_to_undo = self.move_log[-1]  # The last move
+            move_to_undo = self.move_log.pop()  # The last move
             self.make_move(Move(move_to_undo.end_square, move_to_undo.start_square))
             # Makes the move in the opposite direction
 
             game_state.board[move_to_undo.end_row][move_to_undo.end_column] = move_to_undo.piece_to_capture
             # Returns the captured piece to its place
 
-            del (self.move_log[-1], self.move_log[-1])
-            # Deletes the last two moves from the move log (original move, opposite direction)
+            del (self.move_log[-1])
+            # Deletes the move in the opposite direction from the move log
 
     def promote_pawn(self, r, c, piece):
         self.board[r][c] = piece
@@ -257,7 +280,7 @@ def draw_pieces(gs):
 
 
 def get_valid_moves():
-    available_moves = None
+    available_moves = []
 
     for r in range(squares):
         for c in range(squares):
