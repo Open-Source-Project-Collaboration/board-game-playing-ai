@@ -50,19 +50,22 @@ class GameState:
                     self.en_passant = []
 
         if move.piece_to_move[1] == "K":
-            kingside_direction = 1
+            kingside_direction = 1  # The left side of the king
             if abs(move.end_column - move.start_column) == 2:
-                direction = (move.end_column - move.start_column) // 2
-                knight_to_castle_col = 7 if direction == kingside_direction else 0
-                knight_to_castle = self.board[move.start_row][knight_to_castle_col]
-                self.board[move.start_row][knight_to_castle_col] = '--'
-                self.board[move.start_row][move.start_column + 1 * direction] = knight_to_castle
+                direction = (move.end_column - move.start_column) // 2  # Direction can be +1 or -1
+                rook_to_castle_col = 7 if direction == kingside_direction else 0
+                rook_to_castle = self.board[move.start_row][rook_to_castle_col]
+                self.board[move.start_row][rook_to_castle_col] = '--'
+                self.board[move.start_row][move.start_column + 1 * direction] = rook_to_castle
+                # The rook jumps to the square over which the king crossed
 
+            # Remove the possible castling moves in that row when the king is moved
             if (move.start_row, 0) in self.castling:
                 self.castling.remove((move.start_row, 0))
             if (move.start_row, 7) in self.castling:
                 self.castling.remove((move.start_row, 7))
 
+        # If a rook is moved, remove its castling moves
         elif move.piece_to_move[1] == "R":
             if (move.start_row, move.start_column) in self.castling:
                 self.castling.remove((move.start_row, move.start_column))
