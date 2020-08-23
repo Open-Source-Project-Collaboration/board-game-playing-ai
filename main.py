@@ -167,14 +167,9 @@ class GameState:
 
         return valid_moves_return
 
-    def qbr_moves(self, piece, r, c):
-        directions = []
-        if piece == "Q":
-            directions = [(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 1), (1, 0), (-1, 0), (0, -1)]
-        elif piece == "B":
-            directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
-        elif piece == "R":
-            directions = [(0, 1), (1, 0), (-1, 0), (0, -1)]
+    def get_queen_moves(self, r, c):
+        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 1), (1, 0), (-1, 0), (0, -1)]
+
         current_player = self.board[r][c][0]
         enemy_player = 'w' if current_player == 'b' else 'b'
         valid_moves_return = []
@@ -189,6 +184,48 @@ class GameState:
                 valid_moves_return.append(Move((r, c), (new_r, new_c)))  # for any other cases, it's a valid move
                 if current_tile == enemy_player:
                     break  # stop searching if we reach an enemy piece
+        return valid_moves_return
+
+    def get_bishop_moves(self, r, c):
+        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+
+        current_player = self.board[r][c][0]
+        enemy_player = 'w' if current_player == 'b' else 'b'
+        valid_moves_return = []
+        for x, y in directions:
+            for dist in range(1, 8):
+                new_r, new_c = r + x * dist, c + y * dist
+                if not 0 <= new_r <= 7 or not 0 <= new_c <= 7:
+                    break
+                current_tile = self.board[new_r][new_c][0]
+                if current_tile == current_player:
+                    break  # stop searching if we reach a friendly piece
+                valid_moves_return.append(Move((r, c), (new_r, new_c)))  # for any other cases, it's a valid move
+                if current_tile == enemy_player:
+                    break  # stop searching if we reach an enemy piece
+        return valid_moves_return
+
+    def get_rook_moves(self, r, c):
+        directions = [(0, 1), (1, 0), (-1, 0), (0, -1)]
+
+        current_player = self.board[r][c][0]
+        enemy_player = 'w' if current_player == 'b' else 'b'
+        valid_moves_return = []
+        for x, y in directions:
+            for dist in range(1, 8):
+                new_r, new_c = r + x * dist, c + y * dist
+                if not 0 <= new_r <= 7 or not 0 <= new_c <= 7:
+                    break
+                current_tile = self.board[new_r][new_c][0]
+                if current_tile == current_player:
+                    break  # stop searching if we reach a friendly piece
+                valid_moves_return.append(Move((r, c), (new_r, new_c)))  # for any other cases, it's a valid move
+                if current_tile == enemy_player:
+                    break  # stop searching if we reach an enemy piece
+        if c in [0, 7]:
+            castling_moves = game_state.get_castling(r, c)
+            for item in castling_moves:
+                available_moves.append(item)
         return valid_moves_return
 
     def get_castling(self, r, c):
@@ -285,20 +322,12 @@ def get_valid_moves():
     for r in range(squares):
         for c in range(squares):
             piece = game_state.board[r][c][1]
-            if piece == "P":
-                available_moves = game_state.get_pawn_moves(r, c)
-            elif piece == "N":
-                available_moves = game_state.get_knight_moves(r, c)
-            elif piece == "B":
-                available_moves = game_state.qbr_moves("B", r, c)
-            elif piece == "R":
-                available_moves = game_state.qbr_moves("R", r, c)
-                if c in [0, 7]:
-                    castling_moves = game_state.get_castling(r, c)
-                    for item in castling_moves:
-                        available_moves.append(item)
-            elif piece == "Q":
-                available_moves = game_state.qbr_moves("Q", r, c)
+            # Dictionary holding the pieces and their corresponding move function
+            pieces_dict = {"P": game_state.get_pawn_moves, "N": game_state.get_knight_moves,
+                           "B": game_state.get_bishop_moves, "R": game_state.get_rook_moves,
+                           "Q": game_state.get_queen_moves}  # Add 'K' when get_king_moves function is made
+            if piece in pieces_dict:
+                available_moves = pieces_dict[piece](r, c)  # Reference the dict to find the pieces possible moves
 
             for item in available_moves:
                 if item.piece_to_capture[1] != 'K':
