@@ -225,7 +225,7 @@ class GameState:
         if c in [0, 7]:
             castling_moves = game_state.get_castling(r, c)
             for item in castling_moves:
-                available_moves.append(item)
+                valid_moves.append(item)
         return valid_moves_return
 
     def get_castling(self, r, c):
