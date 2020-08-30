@@ -87,122 +87,159 @@ class GameState:
             del (self.move_log[-1])
             # Deletes the move in the opposite direction from the move log
 
-    def promote_pawn(self, r, c, piece):
-        self.board[r][c] = piece
+    def promote_pawn(self, row, col, piece):
+        self.board[row][col] = piece
 
-    def get_pawn_moves(self, r, c):
+    def get_pawn_moves(self, row, col):
         valid_moves_return = []
-        pawn_color = self.board[r][c][0]
+        pawn_color = self.board[row][col][0]
 
         if pawn_color == 'w':
-            next_row = r - 1
-            next_two_rows = r - 2
+            next_row = row - 1
+            next_two_rows = row - 2
             opponent_piece_color = 'b'
             fifth_rank = 3  # The row at which the white pawn is at fifth rank
         else:
-            next_row = r + 1
-            next_two_rows = r + 2
+            next_row = row + 1
+            next_two_rows = row + 2
             opponent_piece_color = 'w'
             fifth_rank = 4  # The row at which the black pawn is at fifth rank
 
         if next_row not in [-1, 8]:  # To avoid list index error when pawn is at the edge
 
-            if self.board[next_row][c] == '--':  # Empty square in front of pawn
-                valid_moves_return.append(Move((r, c), (next_row, c)))
-                if (r == 6 and pawn_color == 'w') or (r == 1 and pawn_color == 'b') \
-                        and self.board[next_two_rows][c] == '--':  # Two empty squares in front of pawn
+            if self.board[next_row][col] == '--':  # Empty square in front of pawn
+                valid_moves_return.append(Move((row, col), (next_row, col)))
+                if (row == 6 and pawn_color == 'w') or (row == 1 and pawn_color == 'b') \
+                        and self.board[next_two_rows][col] == '--':  # Two empty squares in front of pawn
                     # before moving it
-                    valid_moves_return.append(Move((r, c), (next_two_rows, c)))
+                    valid_moves_return.append(Move((row, col), (next_two_rows, col)))
 
-            if c != 0 and self.board[next_row][c - 1][0] == opponent_piece_color:
+            if col != 0 and self.board[next_row][col - 1][0] == opponent_piece_color:
                 # Opponent piece placed diagonally adjacent
-                valid_moves_return.append(Move((r, c), (next_row, c - 1)))
+                valid_moves_return.append(Move((row, col), (next_row, col - 1)))
 
-            if c != 7 and self.board[next_row][c + 1][0] == opponent_piece_color:
+            if col != 7 and self.board[next_row][col + 1][0] == opponent_piece_color:
                 # Same but the other side of the diagonal
-                valid_moves_return.append(Move((r, c), (next_row, c + 1)))
+                valid_moves_return.append(Move((row, col), (next_row, col + 1)))
 
             # En Passant conditions
             if self.move_log:  # If there are moves in the move log
                 last_move = self.move_log[-1]  # Sees the last move made
-                if c != 0 and r == fifth_rank and self.board[r][c - 1][0] == opponent_piece_color and \
+                if col != 0 and row == fifth_rank and self.board[row][col - 1][0] == opponent_piece_color and \
                         last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2 \
-                        and last_move.end_column == c - 1:
-                    self.en_passant.append((r, c))
+                        and last_move.end_column == col - 1:
+                    self.en_passant.append((row, col))
                     self.en_passant_length = len(self.move_log)
-                    valid_moves_return.append(Move((r, c), (next_row, c - 1)))
+                    valid_moves_return.append(Move((row, col), (next_row, col - 1)))
 
-                if c != 7 and r == fifth_rank and self.board[r][c + 1][0] == opponent_piece_color and \
+                if col != 7 and row == fifth_rank and self.board[row][col + 1][0] == opponent_piece_color and \
                         last_move.piece_to_move[1] == "P" and abs(last_move.end_row - last_move.start_row) == 2 \
-                        and last_move.end_column == c + 1:
-                    self.en_passant.append((r, c))
+                        and last_move.end_column == col + 1:
+                    self.en_passant.append((row, col))
                     self.en_passant_length = len(self.move_log)
-                    valid_moves_return.append(Move((r, c), (next_row, c + 1)))
+                    valid_moves_return.append(Move((row, col), (next_row, col + 1)))
 
             return valid_moves_return
         else:
-            self.pawn_promotion = (r, c)
+            self.pawn_promotion = (row, col)
 
-    def get_knight_moves(self, r, c):
+    def get_knight_moves(self, row, col):
         valid_moves_return = []
-        knight_color = self.board[r][c][0]
-        next_two_rows = r - 2
-        next_row = r - 1
-        previous_two_rows = r + 2
-        previous_row = r + 1
+        knight_color = self.board[row][col][0]
+        next_two_rows = row - 2
+        next_row = row - 1
+        previous_two_rows = row + 2
+        previous_row = row + 1
 
         for item in [next_row, previous_row]:  # One square horizontally, two squares vertically move
             if 0 <= item <= 7:
-                if c + 2 <= 7 and self.board[item][c + 2][0] != knight_color:
-                    valid_moves_return.append(Move((r, c), (item, c + 2)))
-                if c - 2 >= 0 and self.board[item][c - 2][0] != knight_color:
-                    valid_moves_return.append(Move((r, c), (item, c - 2)))
+                if col + 2 <= 7 and self.board[item][col + 2][0] != knight_color:
+                    valid_moves_return.append(Move((row, col), (item, col + 2)))
+                if col - 2 >= 0 and self.board[item][col - 2][0] != knight_color:
+                    valid_moves_return.append(Move((row, col), (item, col - 2)))
 
         for item in [next_two_rows, previous_two_rows]:  # Two squares horizontally, one square vertically move
             if 0 <= item <= 7:
-                if c + 1 <= 7 and self.board[item][c + 1][0] != knight_color:
-                    valid_moves_return.append(Move((r, c), (item, c + 1)))
-                if c - 1 >= 0 and self.board[item][c - 1][0] != knight_color:
-                    valid_moves_return.append(Move((r, c), (item, c - 1)))
+                if col + 1 <= 7 and self.board[item][col + 1][0] != knight_color:
+                    valid_moves_return.append(Move((row, col), (item, col + 1)))
+                if col - 1 >= 0 and self.board[item][col - 1][0] != knight_color:
+                    valid_moves_return.append(Move((row, col), (item, col - 1)))
 
         return valid_moves_return
 
-    def qbr_moves(self, piece, r, c):
-        directions = []
-        if piece == "Q":
-            directions = [(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 1), (1, 0), (-1, 0), (0, -1)]
-        elif piece == "B":
-            directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
-        elif piece == "R":
-            directions = [(0, 1), (1, 0), (-1, 0), (0, -1)]
-        current_player = self.board[r][c][0]
+    def get_queen_moves(self, row, col):
+        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1), (0, 1), (1, 0), (-1, 0), (0, -1)]
+
+        current_player = self.board[row][col][0]
         enemy_player = 'w' if current_player == 'b' else 'b'
         valid_moves_return = []
         for x, y in directions:
             for dist in range(1, 8):
-                new_r, new_c = r + x * dist, c + y * dist
+                new_r, new_c = row + x * dist, col + y * dist
                 if not 0 <= new_r <= 7 or not 0 <= new_c <= 7:
                     break
                 current_tile = self.board[new_r][new_c][0]
                 if current_tile == current_player:
                     break  # stop searching if we reach a friendly piece
-                valid_moves_return.append(Move((r, c), (new_r, new_c)))  # for any other cases, it's a valid move
+                valid_moves_return.append(Move((row, col), (new_r, new_c)))  # for any other cases, it's a valid move
                 if current_tile == enemy_player:
                     break  # stop searching if we reach an enemy piece
         return valid_moves_return
 
-    def get_castling(self, r, c):
+    def get_bishop_moves(self, row, col):
+        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+
+        current_player = self.board[row][col][0]
+        enemy_player = 'w' if current_player == 'b' else 'b'
+        valid_moves_return = []
+        for x, y in directions:
+            for dist in range(1, 8):
+                new_r, new_c = row + x * dist, col + y * dist
+                if not 0 <= new_r <= 7 or not 0 <= new_c <= 7:
+                    break
+                current_tile = self.board[new_r][new_c][0]
+                if current_tile == current_player:
+                    break  # stop searching if we reach a friendly piece
+                valid_moves_return.append(Move((row, col), (new_r, new_c)))  # for any other cases, it's a valid move
+                if current_tile == enemy_player:
+                    break  # stop searching if we reach an enemy piece
+        return valid_moves_return
+
+    def get_rook_moves(self, row, col):
+        directions = [(0, 1), (1, 0), (-1, 0), (0, -1)]
+
+        current_player = self.board[row][col][0]
+        enemy_player = 'w' if current_player == 'b' else 'b'
+        valid_moves_return = []
+        for x, y in directions:
+            for dist in range(1, 8):
+                new_r, new_c = row + x * dist, col + y * dist
+                if not 0 <= new_r <= 7 or not 0 <= new_c <= 7:
+                    break
+                current_tile = self.board[new_r][new_c][0]
+                if current_tile == current_player:
+                    break  # stop searching if we reach a friendly piece
+                valid_moves_return.append(Move((row, col), (new_r, new_c)))  # for any other cases, it's a valid move
+                if current_tile == enemy_player:
+                    break  # stop searching if we reach an enemy piece
+        if col in [0, 7]:
+            castling_moves = game_state.get_castling(row, col)
+            for item in castling_moves:
+                valid_moves.append(item)
+        return valid_moves_return
+
+    def get_castling(self, row, col):
         valid_moves_return = []
         directions = [1, -1]  # Directions that determine how the search will move
         for direction in directions:
             for dist in range(1, 5):
-                if 0 <= c + dist * direction <= 7:
-                    tile = self.board[r][c + dist * direction]
+                if 0 <= col + dist * direction <= 7:
+                    tile = self.board[row][col + dist * direction]
                     if tile != '--' and tile[1] != 'K':  # If it is neither an empty square nor a king
                         break
-                    elif tile[1] == 'K' and (r, c) in self.castling:
+                    elif tile[1] == 'K' and (row, col) in self.castling:
                         # The king can jump two columns according to this formula
-                        valid_moves_return.append(Move((r, c + dist * direction), (r, c + (dist - 2) * direction)))
+                        valid_moves_return.append(Move((row, col + dist * direction), (row, col + (dist - 2) * direction)))
                         break
         return valid_moves_return
 
@@ -237,14 +274,14 @@ def load_images():  # Loads the images of the pieces
 
 
 def draw_board():
-    for r in range(squares):
-        for c in range(squares):
-            color = colors[(r + c) % 2]  # Picks either the white square or the black one
-            pygame.draw.rect(screen, color, pygame.Rect(c * square_size, r * square_size, square_size, square_size))
+    for row in range(squares):
+        for col in range(squares):
+            color = colors[(row + col) % 2]  # Picks either the white square or the black one
+            pygame.draw.rect(screen, color, pygame.Rect(col * square_size, row * square_size, square_size, square_size))
             # Adds the picked square
 
-            if (r, c) in highlighted_squares:
-                screen.blit(colors[2], pygame.Rect(c * square_size, r * square_size, square_size, square_size))
+            if (row, col) in highlighted_squares:
+                screen.blit(colors[2], pygame.Rect(col * square_size, row * square_size, square_size, square_size))
 
     if game_state.pawn_promotion != ():  # If there is a pawn to be promoted
         surface = pygame.Surface((width, height))
@@ -271,34 +308,26 @@ def draw_board():
 
 
 def draw_pieces(gs):
-    for r in range(squares):
-        for c in range(squares):
-            piece = gs.board[r][c]  # Gets the piece on the square in GameState.board
+    for row in range(squares):
+        for col in range(squares):
+            piece = gs.board[row][col]  # Gets the piece on the square in GameState.board
             if piece != "--":  # If the square is not empty
                 screen.blit(pieces_images[piece],
-                            pygame.Rect(c * square_size, r * square_size, square_size, square_size))
+                            pygame.Rect(col * square_size, row * square_size, square_size, square_size))
 
 
 def get_valid_moves():
     available_moves = []
 
-    for r in range(squares):
-        for c in range(squares):
-            piece = game_state.board[r][c][1]
-            if piece == "P":
-                available_moves = game_state.get_pawn_moves(r, c)
-            elif piece == "N":
-                available_moves = game_state.get_knight_moves(r, c)
-            elif piece == "B":
-                available_moves = game_state.qbr_moves("B", r, c)
-            elif piece == "R":
-                available_moves = game_state.qbr_moves("R", r, c)
-                if c in [0, 7]:
-                    castling_moves = game_state.get_castling(r, c)
-                    for item in castling_moves:
-                        available_moves.append(item)
-            elif piece == "Q":
-                available_moves = game_state.qbr_moves("Q", r, c)
+    for row in range(squares):
+        for col in range(squares):
+            piece = game_state.board[row][col][1]
+            # Dictionary holding the pieces and their corresponding move function
+            pieces_dict = {"P": game_state.get_pawn_moves, "N": game_state.get_knight_moves,
+                           "B": game_state.get_bishop_moves, "R": game_state.get_rook_moves,
+                           "Q": game_state.get_queen_moves}  # Add 'K' when get_king_moves function is made
+            if piece in pieces_dict:
+                available_moves = pieces_dict[piece](row, col)  # Reference the dict to find the pieces possible moves
 
             for item in available_moves:
                 if item.piece_to_capture[1] != 'K':
